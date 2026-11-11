@@ -5,10 +5,22 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>MarketRank · Fluxscape | A 股资金稳态分布</title>
 <!-- 资源优先走 jsDelivr CDN（国内访问 GitHub Pages 的东京节点易断连），
-     每个资源都带 onerror 回退到同目录相对路径，CDN 不可用时仍可运行。
-     更新资源版本时，需同步修改下方 MR_CDN 与各 src 中的版本号，并打新 tag。 -->
-<script>window.MR_CDN = "https://cdn.jsdelivr.net/gh/fananwu/MarketRank@v1.0.0/";</script>
-<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/fananwu/MarketRank@v1.0.0/styles.css"
+     失败时回退到同目录相对路径。更新资源版本时需同步修改 MR_CDN 与各 src 中的版本号，并打新 tag。
+     注意：静态 <script> 一旦失败，改 src 不会重新执行（HTML 规范 already-started），
+     必须动态插入新元素；async=false 保证按 DOM 顺序执行，不破坏 core→landscape→main 的依赖。 -->
+<script>
+  window.MR_CDN = "https://cdn.jsdelivr.net/gh/fananwu/MarketRank@v1.0.1/";
+  window.MR_FB = function (el) {
+    var p = el.getAttribute("data-fb");
+    if (!p) return;
+    el.removeAttribute("data-fb");
+    var s = document.createElement("script");
+    s.async = false;
+    s.src = p;
+    document.head.appendChild(s);
+  };
+</script>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/fananwu/MarketRank@v1.0.1/styles.css"
       onerror="this.onerror=null;this.href='styles.css'">
 </head>
 <body>
@@ -305,27 +317,27 @@
     }, 1000);
   })();
 </script>
-<script src="https://cdn.jsdelivr.net/gh/fananwu/MarketRank@v1.0.0/data/meta.js"
-        onerror="this.onerror=null;this.src='data/meta.js'"></script>
-<script src="https://cdn.jsdelivr.net/gh/fananwu/MarketRank@v1.0.0/data/series.js"
-        onerror="this.onerror=null;this.src='data/series.js'"></script>
-<script src="https://cdn.jsdelivr.net/gh/fananwu/MarketRank@v1.0.0/data/boards.js"
-        onerror="this.onerror=null;this.src='data/boards.js'"></script>
-<script src="https://cdn.jsdelivr.net/gh/fananwu/MarketRank@v1.0.0/data/manifest.js"
-        onerror="this.onerror=null;this.src='data/manifest.js'"></script>
-<script src="https://cdn.jsdelivr.net/gh/fananwu/MarketRank@v1.0.0/vendor/three.min.js"
-        onerror="this.onerror=null;this.src='vendor/three.min.js'"></script>
-<script src="https://cdn.jsdelivr.net/gh/fananwu/MarketRank@v1.0.0/js/core.js"
-        onerror="this.onerror=null;this.src='js/core.js'"></script>
-<script src="https://cdn.jsdelivr.net/gh/fananwu/MarketRank@v1.0.0/js/chartlib.js"
-        onerror="this.onerror=null;this.src='js/chartlib.js'"></script>
-<script src="https://cdn.jsdelivr.net/gh/fananwu/MarketRank@v1.0.0/js/landscape.js"
-        onerror="this.onerror=null;this.src='js/landscape.js'"></script>
-<script src="https://cdn.jsdelivr.net/gh/fananwu/MarketRank@v1.0.0/js/panels.js"
-        onerror="this.onerror=null;this.src='js/panels.js'"></script>
-<script src="https://cdn.jsdelivr.net/gh/fananwu/MarketRank@v1.0.0/js/drill.js"
-        onerror="this.onerror=null;this.src='js/drill.js'"></script>
-<script src="https://cdn.jsdelivr.net/gh/fananwu/MarketRank@v1.0.0/js/main.js"
-        onerror="this.onerror=null;this.src='js/main.js'"></script>
+<script src="https://cdn.jsdelivr.net/gh/fananwu/MarketRank@v1.0.1/data/meta.js"
+        data-fb="data/meta.js" onerror="MR_FB(this)"></script>
+<script src="https://cdn.jsdelivr.net/gh/fananwu/MarketRank@v1.0.1/data/series.js"
+        data-fb="data/series.js" onerror="MR_FB(this)"></script>
+<script src="https://cdn.jsdelivr.net/gh/fananwu/MarketRank@v1.0.1/data/boards.js"
+        data-fb="data/boards.js" onerror="MR_FB(this)"></script>
+<script src="https://cdn.jsdelivr.net/gh/fananwu/MarketRank@v1.0.1/data/manifest.js"
+        data-fb="data/manifest.js" onerror="MR_FB(this)"></script>
+<script src="https://cdn.jsdelivr.net/gh/fananwu/MarketRank@v1.0.1/vendor/three.min.js"
+        data-fb="vendor/three.min.js" onerror="MR_FB(this)"></script>
+<script src="https://cdn.jsdelivr.net/gh/fananwu/MarketRank@v1.0.1/js/core.js"
+        data-fb="js/core.js" onerror="MR_FB(this)"></script>
+<script src="https://cdn.jsdelivr.net/gh/fananwu/MarketRank@v1.0.1/js/chartlib.js"
+        data-fb="js/chartlib.js" onerror="MR_FB(this)"></script>
+<script src="https://cdn.jsdelivr.net/gh/fananwu/MarketRank@v1.0.1/js/landscape.js"
+        data-fb="js/landscape.js" onerror="MR_FB(this)"></script>
+<script src="https://cdn.jsdelivr.net/gh/fananwu/MarketRank@v1.0.1/js/panels.js"
+        data-fb="js/panels.js" onerror="MR_FB(this)"></script>
+<script src="https://cdn.jsdelivr.net/gh/fananwu/MarketRank@v1.0.1/js/drill.js"
+        data-fb="js/drill.js" onerror="MR_FB(this)"></script>
+<script src="https://cdn.jsdelivr.net/gh/fananwu/MarketRank@v1.0.1/js/main.js"
+        data-fb="js/main.js" onerror="MR_FB(this)"></script>
 </body>
 </html>

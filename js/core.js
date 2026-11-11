@@ -238,22 +238,20 @@
     var list = pending[date] || (pending[date] = []);
     list.push(cb);
     if (list.length > 1) return;
-    var s = document.createElement("script");
     var msg = document.getElementById("ldMsg");
-    if (msg) msg.textContent = "正在载入 " + date + " 帧…";
-    s.src = (window.MR_CDN || "") + "data/frames/" + date + ".js";
-    s.onerror = function () {
-      /* CDN 不可用时回退到同目录相对路径，每帧只回退一次 */
-      if (!s.getAttribute("data-fallback")) {
-        s.setAttribute("data-fallback", "1");
-        if (msg) msg.textContent = "CDN 不可用，改用本地源载入 " + date + " 帧…";
-        s.src = "data/frames/" + date + ".js";
-        return;
-      }
-      delete pending[date];
-      if (msg) msg.textContent = "帧加载失败: " + date;
-    };
-    document.head.appendChild(s);
+    /* 回退必须新建 script 元素：已失败的 script 改 src 不会重新执行（HTML 规范 already-started） */
+    function load(src, isFallback) {
+      if (msg) msg.textContent = (isFallback ? "CDN 不可用，改用本地源载入 " : "正在载入 ") + date + " 帧…";
+      var s = document.createElement("script");
+      s.src = src;
+      s.onerror = function () {
+        if (!isFallback) { load("data/frames/" + date + ".js", true); return; }
+        delete pending[date];
+        if (msg) msg.textContent = "帧加载失败: " + date;
+      };
+      document.head.appendChild(s);
+    }
+    load((window.MR_CDN || "") + "data/frames/" + date + ".js", false);
   }
 
   var MR = {
