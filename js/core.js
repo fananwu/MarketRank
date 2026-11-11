@@ -239,9 +239,19 @@
     list.push(cb);
     if (list.length > 1) return;
     var s = document.createElement("script");
-    s.src = "data/frames/" + date + ".js";
+    var msg = document.getElementById("ldMsg");
+    if (msg) msg.textContent = "正在载入 " + date + " 帧…";
+    s.src = (window.MR_CDN || "") + "data/frames/" + date + ".js";
     s.onerror = function () {
-      document.getElementById("ldMsg").textContent = "帧加载失败: " + date;
+      /* CDN 不可用时回退到同目录相对路径，每帧只回退一次 */
+      if (!s.getAttribute("data-fallback")) {
+        s.setAttribute("data-fallback", "1");
+        if (msg) msg.textContent = "CDN 不可用，改用本地源载入 " + date + " 帧…";
+        s.src = "data/frames/" + date + ".js";
+        return;
+      }
+      delete pending[date];
+      if (msg) msg.textContent = "帧加载失败: " + date;
     };
     document.head.appendChild(s);
   }
