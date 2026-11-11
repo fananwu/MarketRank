@@ -1,0 +1,23 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+venv/
+
+# 编辑器与系统
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+
+# 调试产物（截图、日志、临时验收脚本）
+tools/*.png
+tools/*.log
+tools/t_*.js
+
+# Node（本仓库零构建，仅验收脚本可能用到）
+node_modules/
+package-lock.json
+
+# 注意：data/ 是正式提交内容，不要加入忽略列表

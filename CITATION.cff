@@ -1,0 +1,27 @@
+cff-version: 1.2.0
+message: "If you use this software or its results, please cite it as below."
+title: "A 股资金稳态地形的马尔可夫链建模与证伪"
+abstract: "Reproduction, institutional adaptation, and falsification of the MarketRank Markov-chain pipeline (arXiv:2610.08946) on China's A-share market. Three-tier result, two of which are negative: the apparent reversal signal is a disguised size effect."
+type: software
+authors:
+  - name: "fananwu"
+version: 1.0.0
+date-released: "2026-11-11"
+license: Apache-2.0
+repository-code: "https://github.com/fananwu/MarketRank"
+keywords:
+  - markov-chain
+  - stationary-distribution
+  - market-microstructure
+  - a-share
+  - factor-falsification
+  - three-js
+  - data-visualization
+references:
+  - type: article
+    title: "MarketRank"
+    authors:
+      - family-names: "Karamete"
+        given-names: "B. K."
+    year: 2026
+    notes: "arXiv:2610.08946v1"

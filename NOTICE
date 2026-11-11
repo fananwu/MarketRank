@@ -1,0 +1,48 @@
+MarketRank · Fluxscape
+======================
+
+Copyright © 2026 fananwu.
+
+本仓库的代码与文档版权归 fananwu 所有，许可条款见 LICENSE（Apache-2.0）
+与 LICENSE-DOCS（CC BY 4.0）。data/ 内的行情数据不在上述许可范围内。
+
+本仓库包含第三方组件，其许可与版权归原作者所有，详见下表。
+
+--------------------------------------------------------------------------------
+three.js
+--------------------------------------------------------------------------------
+
+文件：vendor/three.min.js
+
+Copyright © 2010-2024 three.js authors
+
+MIT License
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+
+--------------------------------------------------------------------------------
+引用文献
+--------------------------------------------------------------------------------
+
+本项目的建模方法来自以下论文，该方法本身不属于本仓库的许可范围：
+
+  B. K. Karamete, "MarketRank", arXiv:2610.08946v1.
+
+本仓库对该论文的复现、制度性改造、实测数据与全部结论均为独立完成，
+引用之处已在正文中标注来源。

@@ -1,0 +1,302 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>MarketRank · Fluxscape | A 股资金稳态分布</title>
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+<div id="app">
+
+  <header class="topbar">
+    <div class="brand">
+      <div class="brand-mark"></div>
+      <div>
+        <div class="brand-title">MarketRank <span>· Fluxscape</span></div>
+        <div class="brand-sub">arXiv:2610.08946v1 · Markov 稳态资金分布 · A 股本地日线</div>
+      </div>
+    </div>
+    <div class="kpis" id="kpis"></div>
+    <div class="top-actions">
+      <button class="btn" id="btnAbout" title="数据与论文说明">ⓘ 说明</button>
+      <button class="btn" id="btnReset" title="清除板块筛选与跟踪">重置视图</button>
+    </div>
+  </header>
+
+  <div class="timeline">
+    <button class="btn play" id="btnPlay" title="播放 / 暂停">▶</button>
+    <div class="tl-date"><span id="tlDate">—</span><small id="tlIndex"></small></div>
+    <input type="range" id="tlRange" min="0" max="59" value="59" step="1" aria-label="交易日时间轴">
+    <div class="tl-ticks" id="tlTicks"></div>
+    <div class="tl-meta" id="tlMeta"></div>
+  </div>
+
+  <main class="layout">
+    <!-- 板块导航：五类全部板块 -->
+    <aside class="panel boards-panel">
+      <div class="panel-head">
+        <h2>板块全景</h2>
+        <span class="badge" id="boardCount">—</span>
+      </div>
+      <div class="board-tabs" id="boardTabs"></div>
+      <div class="search-wrap">
+        <input id="boardSearch" type="search" placeholder="搜索板块 / 成分代码" autocomplete="off">
+      </div>
+      <div class="board-summary" id="boardSummary"></div>
+      <div class="board-head"><span>板块</span><span>涨幅</span><span>πN</span><span>强弱</span><span>只数</span></div>
+      <div class="board-list" id="boardList"></div>
+      <div class="board-members" id="boardMembers"></div>
+    </aside>
+
+    <!-- 中央：Sections 主视图 + 剖面 + 板块时间序列 -->
+    <section class="center">
+      <div class="panel surface-panel" id="surfacePanel">
+        <div class="panel-head">
+          <h2>Sections <span class="sub">中央地形 · log(π/s)</span></h2>
+          <div class="view-switch" id="viewSwitch">
+            <button data-view="top">俯视</button>
+            <button data-view="3d" class="active">3D</button>
+            <button data-view="front">正视</button>
+            <button data-view="side">侧视</button>
+          </div>
+          <div class="head-actions">
+            <label class="sel-wrap" title="地形上直接标注的股票数量">
+              <span>标签</span>
+              <select id="selLabels">
+                <option value="0">关</option>
+                <option value="12">12</option>
+                <option value="30" selected>30</option>
+                <option value="60">60</option>
+              </select>
+            </label>
+            <label class="chk"><input type="checkbox" id="chkContour" checked> 等高线</label>
+            <label class="chk"><input type="checkbox" id="chkFlow" checked> 资金流</label>
+            <button class="btn mini icon" id="btnTune" title="地形参数（等高线间距 / 粒子速度 / 网格 / 持仓）">⚙</button>
+            <button class="btn mini icon" id="btnExpand" title="全屏主视图 (F)">⛶</button>
+          </div>
+        </div>
+        <div class="tune-pop hidden" id="tunePop">
+          <div class="tp-row">
+            <label for="selLabelSize">标签字号</label>
+            <select id="selLabelSize">
+              <option value="10">小 10</option>
+              <option value="11.5">中 11.5</option>
+              <option value="13" selected>大 13</option>
+              <option value="15">特大 15</option>
+            </select>
+          </div>
+          <div class="tp-row">
+            <label for="selContourStep">等高线间距</label>
+            <select id="selContourStep">
+              <option value="0" selected>自动</option>
+              <option value="0.1">0.10</option>
+              <option value="0.2">0.20</option>
+              <option value="0.3">0.30</option>
+              <option value="0.5">0.50</option>
+              <option value="1.0">1.00</option>
+            </select>
+          </div>
+          <div class="tp-hint" id="contourInfo">按 log(π/s) 等间距取值</div>
+          <div class="tp-row">
+            <label for="rngFlowSpeed">粒子速度</label>
+            <input type="range" id="rngFlowSpeed" min="0.2" max="3" step="0.1" value="1">
+            <b id="flowSpeedVal">1.0×</b>
+          </div>
+          <div class="tp-row">
+            <label for="rngFlowCount">资金流边数</label>
+            <input type="range" id="rngFlowCount" min="40" max="240" step="20" value="120">
+            <b id="flowCountVal">120</b>
+          </div>
+          <div class="tp-sep"></div>
+          <label class="tp-chk"><input type="checkbox" id="chkWire"> 网格线（三角形网格）</label>
+          <label class="tp-chk"><input type="checkbox" id="chkHold" checked> 持仓标记（pinned）</label>
+          <button class="btn mini" id="btnResetCam">重置视角与缩放</button>
+        </div>
+        <div class="surface" id="surface">
+          <canvas class="surface-leaders" id="surfaceLeaders"></canvas>
+          <div class="surface-labels contour-labels" id="contourLabels"></div>
+          <div class="surface-labels" id="surfaceLabels"></div>
+          <div class="surface-hint" id="surfaceHint">滚轮无级缩放 · 拖动旋转 · 中键拖动平移 · 双击小球看详情 · 标签可点开 · 悬停稍停看卡片</div>
+          <div class="surface-full-hint hidden" id="surfaceFullHint">全屏中 · 按 <kbd>Esc</kbd> 或点右上角 <b>✕</b> 退出</div>
+          <div class="surface-hero" id="surfaceHero"></div>
+          <div class="tooltip" id="surfaceTip"></div>
+          <div class="surface-legend">
+            <span class="lg-grad"></span>
+            <span>资金流出</span><span>0</span><span>资金流入</span>
+            <span class="lg-dot"></span><span>持仓 pinned</span>
+          </div>
+          <div class="surface-stat" id="surfaceStat"></div>
+        </div>
+      </div>
+
+      <div class="panel profile-panel">
+        <div class="panel-head">
+          <h2>剖面 <span class="sub">crosshair · exact 值</span></h2>
+          <span class="badge" id="crossLabel">—</span>
+        </div>
+        <div class="profiles">
+          <div class="profile"><label>行剖面 · X <span id="rowLabel"></span></label><canvas id="profileRow"></canvas></div>
+          <div class="profile"><label>列剖面 · Y <span id="colLabel"></span></label><canvas id="profileCol"></canvas></div>
+        </div>
+      </div>
+
+      <div class="panel board-ts-panel">
+        <div class="panel-head">
+          <h2>板块时间序列 <span class="sub" id="tsTitle">全市场</span></h2>
+          <div class="ts-legend"><i class="c-red"></i>涨幅% <i class="c-blue"></i>πN <i class="c-green"></i>上涨占比</div>
+          <button class="btn mini drill-btn" data-drill="board" title="放大查看板块全貌">⤢</button>
+        </div>
+        <canvas id="boardTs"></canvas>
+        <div class="ts-table-wrap"><table class="mini-table" id="tsTable"></table></div>
+      </div>
+    </section>
+
+    <!-- 右侧：真值表 / 路径 / 转移图 / 个股 -->
+    <aside class="right">
+      <div class="panel truth-panel">
+        <div class="panel-head"><h2>π 真值排行</h2><span class="badge" id="truthCount">Top 10</span></div>
+        <div class="truth-note">精确排序表为 truth；地形只用于读趋势（论文 §6.8）</div>
+        <div class="truth-scroll"><table class="truth-table" id="truthTable"></table></div>
+        <div class="truth-foot"><button class="btn mini" id="btnMore">展开 Top 50</button><span id="truthScope">全部 A 股</span></div>
+      </div>
+
+      <div class="panel detail-panel">
+        <div class="panel-head">
+          <h2>当前标的</h2><span class="badge" id="detailCode">—</span>
+          <button class="btn mini drill-btn" data-drill="sym" title="打开个股详情大图">⤢ 详情</button>
+        </div>
+        <div id="detailBody" class="detail-body"></div>
+      </div>
+
+      <div class="panel paths-panel">
+        <div class="panel-head">
+          <h2>跟踪股票路径</h2><span class="badge" id="trackCount">0</span>
+          <button class="btn mini drill-btn" data-drill="paths" title="放大查看路径与逐日读数">⤢</button>
+        </div>
+        <div class="track-input">
+          <input id="trackSearch" type="search" placeholder="输入代码 / 名称回车跟踪" autocomplete="off">
+          <div id="trackSuggest" class="suggest"></div>
+        </div>
+        <canvas id="pathChart"></canvas>
+        <div id="commStrip" class="comm-strip"></div>
+        <div id="trackChips" class="chips"></div>
+      </div>
+
+      <div class="panel graph-panel">
+        <div class="panel-head">
+          <h2>局部转移图</h2><span class="badge" id="graphCount">—</span>
+          <button class="btn mini drill-btn" data-drill="graph" title="放大查看转移网络与边表">⤢</button>
+        </div>
+        <div class="graph-note">箭头 j→i：资金从 j 流向 i；线宽＝金额；悬停看 P<sub>ji</sub></div>
+        <canvas id="graphChart"></canvas>
+      </div>
+    </aside>
+  </main>
+
+  <footer class="footer">
+    <span>数据源：TDX vipdoc 日线（32 B/条，含 OHLC）· g4day 名称包 · tdxhy/tdxzs 行业 · infoharbor/block 板块</span>
+    <span>地形点=个股，标签可点开详情；各面板右上角 ⤢ 打开大图 · π 按论文 §4 估计，非观测配对，不预测次日收益</span>
+  </footer>
+</div>
+
+<div id="expandMask" class="hidden"></div>
+<div id="loading"><div class="ld-box"><div class="ld-spin"></div><div>正在装载 MarketRank 数据集…</div><small id="ldMsg"></small></div></div>
+
+<!-- 入场影片：先给一个"标题—数据—地形"的节奏 -->
+<div id="intro" class="intro">
+  <div class="intro-inner">
+    <div class="intro-kicker">arXiv:2610.08946v1</div>
+    <h1>MarketRank <em>·</em> Fluxscape</h1>
+    <p>把 2000 只 A 股的资金流向，压成一张可以走进去的地形</p>
+    <div class="intro-stats">
+      <span><b id="introDays">60</b> 个交易日</span>
+      <span><b id="introSyms">2000</b> 只标的</span>
+      <span><b id="introBoards">743</b> 个板块</span>
+    </div>
+  </div>
+</div>
+
+<!-- 放大视图（大图 + 数据明细） -->
+<div id="drill" class="drill hidden">
+  <div class="drill-card">
+    <div class="drill-head">
+      <div class="drill-title"><span class="drill-kind" id="drillKind">DETAIL</span><h2 id="drillTitle">—</h2><span class="drill-sub" id="drillSub"></span></div>
+      <div class="drill-tabs" id="drillTabs"></div>
+      <button class="drill-close" id="drillClose" title="关闭 (Esc)">×</button>
+    </div>
+    <div class="drill-body">
+      <div class="drill-main">
+        <div class="drill-canvas-wrap"><canvas id="drillCanvas"></canvas><div class="drill-cross" id="drillCross"></div></div>
+        <div class="drill-legend" id="drillLegend"></div>
+      </div>
+      <aside class="drill-side">
+        <div class="drill-stats" id="drillStats"></div>
+        <div class="drill-table-head" id="drillTableHead">明细</div>
+        <div class="drill-table" id="drillTable"></div>
+      </aside>
+    </div>
+  </div>
+</div>
+
+<div id="about" class="modal hidden">
+  <div class="modal-card">
+    <button class="modal-close" id="btnAboutClose">×</button>
+    <h2>MarketRank · Fluxscape</h2>
+    <p>本页面按 <b>arXiv:2610.08946v1</b>（B. Kaan Karamete《MarketRank: ranking stocks by the stationary probabilities of a Markov chain over estimated money flows, with a topological landscape view》——<b>用估计的资金流构造马尔可夫链，按稳态概率给股票排名，并给出拓扑地形视图</b>）的 §3–§6 与 Figure 5 固定界面实现。</p>
+    <h3>怎么看这个页面</h3>
+    <ul>
+      <li><b>中央地形</b>：每只股票是一颗点（<b>红=当期上涨、绿=下跌</b>，点越大 πN 越高），山高 = log(π/s)（资金占比取对数）。标签直接标出代码/名称/涨跌，点标签打开个股详情；「标签」下拉切换 12/30/60 个，⚙ 里可调<b>字号</b>（小/中/大/特大），等高线上带斜体高程数值。</li>
+      <li><b>缩放与平移</b>：滚轮<b>无级缩放</b>，并朝鼠标所指的位置推进（放大看局部）；左键拖动旋转地形，<b>中键拖动平移</b>板面；双击空白处或 ⚙ 里的「重置视角」回到默认机位。</li>
+      <li><b>全屏</b>：中央地形右上角 <b>⛶</b> 进入全屏；按 <kbd>Esc</kbd>、点 <b>✕</b>，或再点一次 ⛶ 均可退出。</li>
+      <li><b>参数 ⚙</b>：等高线间距（按 log(π/s) 等距分档，间距越小越密）、资金流粒子的速度与数量、网格线、持仓标记。</li>
+      <li><b>悬停</b>：停在落点或标签上<b>约 0.4 秒</b>后才弹出卡片（避免扫过时卡片乱跳），移开立即收起。</li>
+      <li><b>点击</b>：点标签直接打开个股大图；地形上的小球<b>单击只选中</b>（画十字线、联动其它面板），<b>双击</b>才打开个股大图（K 线 + 成交量 + πN 副图 / πN 轨迹 / 资金对手）。</li>
+      <li><b>⤢ 放大</b>：右侧「跟踪路径」「局部转移图」「当前标的」，以及「板块时间序列」都有放大按钮，进入全屏大图 + 数据明细表。</li>
+      <li><b>时间轴</b>：拖动、播放或点图表任意位置，地形、标签、排行、路径、转移图、板块序列全部按同一交易日联动。</li>
+    </ul>
+    <h3>模型（英文术语 → 中文）</h3>
+    <ul>
+      <li><b>π（pi）</b> = 马尔可夫链的<b>稳态概率</b>（stationary probability），表示资金长期停在该股的份额；<b>score = πN</b>，1 = 市场平均。</li>
+      <li><b>φ = r·V·VWAP</b> = 当日涨跌 × 成交额，即<b>资金流强度</b>；φ&gt;0 为 <b>sink（汇 / 接收方）</b>，φ&lt;0 为 <b>source（源 / 流出方）</b>。地形上的飞行光点就是从 source 飞向 sink，抵达时有一圈接收扩散环，起飞时有一次闪亮。</li>
+      <li><b>correlation-tilted gravity（相关性倾斜引力）</b>：a<sub>ij</sub> = 1 + λρ<sub>ij</sub>，W 为 60 日收益相关；每个 source 只取最强的 top-64 个 sink。</li>
+      <li><b>累积 T 后双侧剪枝</b>（two-sided pruning：行 top-20 / 列 top-10），行归一化得转移矩阵 <b>P</b>。</li>
+      <li><b>damped power iteration（带阻尼的幂迭代）</b>：π = (1−p)πP + p/N，p=0.15，迭代至 ‖Δπ‖₁&lt;1e−10。</li>
+      <li><b>height = log(π/s)</b>：s 为 20 日中位成交额份额，即资金占比的对数高度；<b>heartbeat = Δlog(πN)</b>，即资金脉搏的当日变化量。</li>
+      <li><b>territories（地块 / 社群）</b>：20 根 bar 的资金流图上做 <b>flux community（流量社群）</b>划分，<b>不是行业板块</b>；再经 spectral order（谱排序）→ Hilbert curve（希尔伯特曲线）→ spiral（螺旋填充）→ IDW（反距离加权插值）→ CVT（质心泰森多边形松弛，12 格，λ=0.6）铺成地形。</li>
+      <li><b>truth（真值表）</b>：精确排序表；地形只用来看趋势（论文 §6.8）。</li>
+    </ul>
+    <h3>数据</h3>
+    <ul>
+      <li>日线：<code>vipdoc/{sh,sz,bj}/lday/*.day</code>（完整历史，只读），交易日逐日对齐。</li>
+      <li>名称/价格标定：<code>data/web_cache/20261106/*.cod</code>；行业：<code>tdxhy.cfg + tdxzs.cfg</code>。</li>
+      <li>板块成分：<code>infoharbor_block.dat</code>（概念/风格/指数）+ <code>block.dat</code> + 行业/大类/市场。</li>
+      <li>ETF/基金在链中参与计算，默认不落在地形表面（与论文一致）。</li>
+    </ul>
+    <h3>限制</h3>
+    <p>论文结论：solver（求解器）可靠，但公开日线只含规模与少量时序信息，无法恢复真实的成交配对；π 不预测次日收益，flux communities 也不是行业板块。本页所有数值为按论文公式的本地重算，不构成投资建议。</p>
+    <div id="aboutParams" class="about-params"></div>
+    <p class="about-credit">© 2026 fananwu · 代码 Apache-2.0 · 文档 CC BY 4.0 · 数据仅用于方法复现，不构成投资建议</p>
+  </div>
+</div>
+
+<script>
+  window.MR_FRAMES = {};
+  window.MR_FRAME = function (d, o) {
+    MR_FRAMES[d] = o;
+    if (window.MR_ONFRAME) window.MR_ONFRAME(d);
+  };
+</script>
+<script src="data/meta.js"></script>
+<script src="data/series.js"></script>
+<script src="data/boards.js"></script>
+<script src="data/manifest.js"></script>
+<script src="vendor/three.min.js"></script>
+<script src="js/core.js"></script>
+<script src="js/chartlib.js"></script>
+<script src="js/landscape.js"></script>
+<script src="js/panels.js"></script>
+<script src="js/drill.js"></script>
+<script src="js/main.js"></script>
+</body>
+</html>

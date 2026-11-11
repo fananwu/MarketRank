@@ -1,0 +1,6 @@
+* text=auto eol=lf
+*.png binary
+
+# data/ 为生成物，不做行尾转换，避免校验和不一致
+data/** -text
+vendor/** linguist-vendored
