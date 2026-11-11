@@ -41,6 +41,17 @@ python -m http.server 8000
 
 页面加载后：滚轮无级缩放 · 拖动旋转 · 中键拖动平移 · 双击小球看个股详情 · 时间轴可播放 60 个交易日。
 
+### 在线演示与资源加载
+
+线上地址：<https://fananwu.github.io/MarketRank/>
+
+页面资源优先从 jsDelivr CDN 加载（`cdn.jsdelivr.net/gh/fananwu/MarketRank@v1.0.1/`），
+原因是 GitHub Pages 的服务节点在东京，国内访问约 3.7MB 的同步脚本时常中途断连。
+任一资源加载失败会自动回退到仓库内相对路径，因此**离线或 CDN 不可用时仍能正常运行**。
+
+本地开发时若改动了 `js/` 或 `data/`，记得把 `index.html` 里的版本号与资源路径一起更新，
+并打新 tag —— jsDelivr 对分支名有 12 小时缓存，用 commit 引用可避免版本错配。
+
 ---
 
 ## 目录结构
